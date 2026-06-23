@@ -321,10 +321,16 @@ function showLanding() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 function rasterizeLogo(imgEl, callback) {
+  // Render at 4x the display size for sharpness
+  var displayW = imgEl.offsetWidth || 220;
+  var displayH = imgEl.offsetHeight || 220;
+  var scale = 4;
   var c = document.createElement('canvas');
-  c.width = imgEl.naturalWidth || imgEl.width;
-  c.height = imgEl.naturalHeight || imgEl.height;
+  c.width = displayW * scale;
+  c.height = displayH * scale;
   var ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(imgEl, 0, 0, c.width, c.height);
   callback(c.toDataURL('image/png'));
 }
