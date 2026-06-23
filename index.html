@@ -321,11 +321,7 @@ function showLanding() {
 }
 </script>
 <script>
-function saveCard() {
-  var btn = document.getElementById('save-btn');
-  btn.textContent = 'Saving...';
-  btn.style.opacity = '0.7';
-
+function drawAndExport() {
   var personName = document.getElementById('vc-name').textContent;
   var subtitle   = document.getElementById('vc-subtitle').textContent;
   var title      = document.getElementById('vc-title').textContent;
@@ -333,7 +329,8 @@ function saveCard() {
   var phone      = document.getElementById('vc-phone').textContent;
   var filename   = personName.split(' ')[0].toLowerCase() + '-egmedica-card.png';
 
-  var W=750, topH=450, botH=460, H=topH+botH, R=40;
+  // Portrait card — narrow so it looks right on phones
+  var W=560, topH=390, botH=400, H=topH+botH, R=32;
   var TEAL='#304748', GOLD='#C9A96E';
 
   var canvas = document.createElement('canvas');
@@ -342,7 +339,7 @@ function saveCard() {
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  function roundedRect(x,y,w,h,r) {
+  function roundedRect(x,y,w,h,r){
     ctx.beginPath();
     ctx.moveTo(x+r,y);
     ctx.arcTo(x+w,y,x+w,y+h,r);
@@ -352,69 +349,59 @@ function saveCard() {
     ctx.closePath();
   }
 
-  // Card base
   roundedRect(0,0,W,H,R);
   ctx.fillStyle='#fff'; ctx.fill();
-  ctx.save();
-  roundedRect(0,0,W,H,R);
-  ctx.clip();
+  ctx.save(); roundedRect(0,0,W,H,R); ctx.clip();
 
   // Teal top
-  ctx.fillStyle=TEAL;
-  ctx.fillRect(0,0,W,topH);
+  ctx.fillStyle=TEAL; ctx.fillRect(0,0,W,topH);
 
   // Logo
-  var logoImg = document.querySelector('.vcard-logo');
-  var lw=310, lh=310;
-  ctx.drawImage(logoImg,(W-lw)/2,14,lw,lh);
+  var logoImg=document.querySelector('.vcard-logo');
+  var lw=240;
+  ctx.drawImage(logoImg,(W-lw)/2,10,lw,lw);
 
   // Divider
   ctx.strokeStyle='rgba(201,169,110,0.4)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo((W-110)/2,topH-118); ctx.lineTo((W+110)/2,topH-118); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo((W-80)/2,topH-102); ctx.lineTo((W+80)/2,topH-102); ctx.stroke();
 
   // Name
   ctx.textAlign='center'; ctx.fillStyle=GOLD;
-  ctx.font='bold 40px Optima,Georgia,serif';
-  ctx.fillText(personName,W/2,topH-76);
+  ctx.font='bold 30px Optima,Georgia,serif';
+  ctx.fillText(personName,W/2,topH-68);
 
   // Co-Founder
-  ctx.fillStyle='rgba(201,169,110,0.5)';
-  ctx.font='19px Optima,Georgia,serif';
-  ctx.fillText(subtitle.toUpperCase(),W/2,topH-46);
+  ctx.fillStyle='rgba(201,169,110,0.52)';
+  ctx.font='15px Optima,Georgia,serif';
+  ctx.fillText(subtitle.toUpperCase(),W/2,topH-42);
 
   // Job title
-  ctx.fillStyle='rgba(201,169,110,0.72)';
-  ctx.font='21px Optima,Georgia,serif';
+  ctx.fillStyle='rgba(201,169,110,0.75)';
+  ctx.font='16px Optima,Georgia,serif';
   ctx.fillText(title,W/2,topH-18);
 
   // White bottom
-  ctx.fillStyle='#fff';
-  ctx.fillRect(0,topH,W,botH);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,topH,W,botH);
 
-  // Contact rows
-  var lx=72, tx=lx+46, rowGap=78;
-  var r1=topH+84, r2=r1+rowGap, r3=r2+rowGap;
+  var lx=52, tx=lx+38, rowGap=62;
+  var r1=topH+66, r2=r1+rowGap, r3=r2+rowGap;
 
-  function drawIcon(type,cx,cy) {
-    var s=13;
-    ctx.save(); ctx.strokeStyle=TEAL; ctx.lineWidth=2.2;
+  function drawIcon(type,cx,cy){
+    var s=11;
+    ctx.save(); ctx.strokeStyle=TEAL; ctx.lineWidth=1.8;
     ctx.lineCap='round'; ctx.lineJoin='round';
     if(type==='mail'){
       ctx.beginPath(); ctx.rect(cx-s,cy-s*0.7,s*2,s*1.4); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(cx-s,cy-s*0.7); ctx.lineTo(cx,cy+s*0.1); ctx.lineTo(cx+s,cy-s*0.7); ctx.stroke();
     } else if(type==='phone'){
       ctx.beginPath();
-      ctx.moveTo(cx-s*0.35,cy-s);
-      ctx.quadraticCurveTo(cx-s*0.35,cy-s*1.15,cx,cy-s*1.15);
+      ctx.moveTo(cx-s*0.35,cy-s); ctx.quadraticCurveTo(cx-s*0.35,cy-s*1.15,cx,cy-s*1.15);
       ctx.quadraticCurveTo(cx+s*0.35,cy-s*1.15,cx+s*0.35,cy-s);
-      ctx.lineTo(cx+s*0.35,cy-s*0.5);
-      ctx.quadraticCurveTo(cx+s*0.35,cy-s*0.25,cx+s*0.15,cy-s*0.1);
-      ctx.lineTo(cx+s*0.6,cy+s*0.5);
-      ctx.quadraticCurveTo(cx+s*0.6,cy+s*0.75,cx+s*0.35,cy+s*0.9);
+      ctx.lineTo(cx+s*0.35,cy-s*0.5); ctx.quadraticCurveTo(cx+s*0.35,cy-s*0.25,cx+s*0.15,cy-s*0.1);
+      ctx.lineTo(cx+s*0.6,cy+s*0.5); ctx.quadraticCurveTo(cx+s*0.6,cy+s*0.75,cx+s*0.35,cy+s*0.9);
       ctx.quadraticCurveTo(cx+s*0.1,cy+s*1.1,cx-s*0.1,cy+s);
       ctx.quadraticCurveTo(cx-s*0.45,cy+s*0.8,cx-s*0.55,cy+s*0.5);
-      ctx.lineTo(cx-s*0.15,cy-s*0.1);
-      ctx.quadraticCurveTo(cx-s*0.35,cy-s*0.25,cx-s*0.35,cy-s*0.5);
+      ctx.lineTo(cx-s*0.15,cy-s*0.1); ctx.quadraticCurveTo(cx-s*0.35,cy-s*0.25,cx-s*0.35,cy-s*0.5);
       ctx.closePath(); ctx.stroke();
     } else if(type==='globe'){
       ctx.beginPath(); ctx.arc(cx,cy,s,0,Math.PI*2); ctx.stroke();
@@ -425,33 +412,31 @@ function saveCard() {
   }
 
   ctx.textAlign='left'; ctx.fillStyle='#2c2c2c';
-  ctx.font='26px Optima,Georgia,serif';
+  ctx.font='20px Optima,Georgia,serif';
 
-  drawIcon('mail',  lx+14, r1-7); ctx.fillText(email,         tx+4, r1);
-  drawIcon('phone', lx+14, r2-7); ctx.fillText(phone,         tx+4, r2);
-  drawIcon('globe', lx+14, r3-7); ctx.fillText('egmedica.com',tx+4, r3);
+  drawIcon('mail',  lx+12,r1-6); ctx.fillText(email,        tx,r1);
+  drawIcon('phone', lx+12,r2-6); ctx.fillText(phone,        tx,r2);
+  drawIcon('globe', lx+12,r3-6); ctx.fillText('egmedica.com',tx,r3);
 
-  // Separator
-  var sepY=r3+46;
+  var sepY=r3+38;
   ctx.strokeStyle='#e8e5df'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(lx,sepY); ctx.lineTo(W-lx,sepY); ctx.stroke();
 
-  // QR
-  var qrSize=148, qrY=sepY+16;
-  ctx.drawImage(document.getElementById('vc-qr'), W-lx-qrSize, qrY, qrSize, qrSize);
+  var qrSize=112, qrY=sepY+14;
+  ctx.drawImage(document.getElementById('vc-qr'),W-lx-qrSize,qrY,qrSize,qrSize);
 
-  // Labels
   ctx.fillStyle='rgba(48,71,72,0.45)';
-  ctx.font='bold 17px Optima,Georgia,serif';
-  ctx.fillText('EGMEDICA.COM',lx,sepY+52);
-  ctx.fillStyle='#bbb'; ctx.font='15px Optima,Georgia,serif';
-  ctx.fillText('Scan to visit website',lx,sepY+76);
+  ctx.font='bold 13px Optima,Georgia,serif';
+  ctx.fillText('EGMEDICA.COM',lx,sepY+40);
+  ctx.fillStyle='#bbb'; ctx.font='12px Optima,Georgia,serif';
+  ctx.fillText('Scan to visit website',lx,sepY+60);
 
   ctx.restore();
 
   canvas.toBlob(function(blob){
     var file=new File([blob],filename,{type:'image/png'});
-    btn.textContent='Save card'; btn.style.opacity='1';
+    document.getElementById('save-btn').textContent='Save card';
+    document.getElementById('save-btn').style.opacity='1';
     if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
       navigator.share({files:[file]}).catch(function(){});
     } else {
@@ -461,6 +446,17 @@ function saveCard() {
       setTimeout(function(){URL.revokeObjectURL(url);},3000);
     }
   },'image/png');
+}
+
+function saveCard() {
+  document.getElementById('save-btn').textContent='Saving...';
+  document.getElementById('save-btn').style.opacity='0.7';
+  // Wait for fonts to be ready for crisp text
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(function(){ drawAndExport(); });
+  } else {
+    setTimeout(drawAndExport, 300);
+  }
 }
 </script>
 </body>
