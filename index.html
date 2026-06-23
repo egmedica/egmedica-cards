@@ -321,6 +321,23 @@ function showLanding() {
 }
 </script>
 <script>
+// Pre-render logo to a crisp canvas at startup to avoid SVG taint issues
+var cachedLogoCanvas = null;
+function preRenderLogo(src, cb) {
+  var img = new Image();
+  img.onload = function() {
+    var c = document.createElement('canvas');
+    c.width = 600; c.height = 600;
+    var x = c.getContext('2d');
+    x.imageSmoothingEnabled = true;
+    x.imageSmoothingQuality = 'high';
+    x.drawImage(img, 0, 0, 600, 600);
+    cachedLogoCanvas = c;
+    if (cb) cb();
+  };
+  img.src = src;
+}
+
 function drawAndExport() {
   var personName = document.getElementById('vc-name').textContent;
   var subtitle   = document.getElementById('vc-subtitle').textContent;
@@ -329,66 +346,66 @@ function drawAndExport() {
   var phone      = document.getElementById('vc-phone').textContent;
   var filename   = personName.split(' ')[0].toLowerCase() + '-egmedica-card.png';
 
-  // Portrait card — narrow so it looks right on phones
-  var W=560, topH=390, botH=400, H=topH+botH, R=32;
+  // Logical dimensions (narrow portrait business card)
+  var LW=380, LtopH=340, LbotH=350, LH=LtopH+LbotH, LR=26;
+  // Scale up for Retina sharpness
+  var dpr = Math.min(window.devicePixelRatio || 2, 3);
+  var W=LW*dpr, topH=LtopH*dpr, botH=LbotH*dpr, H=LH*dpr, R=LR*dpr;
   var TEAL='#304748', GOLD='#C9A96E';
 
   var canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
+  canvas.width=W; canvas.height=H;
   var ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
+  ctx.scale(dpr, dpr); // draw in logical coords
+  ctx.imageSmoothingEnabled=true;
+  ctx.imageSmoothingQuality='high';
 
-  function roundedRect(x,y,w,h,r){
+  function rr(x,y,w,h,r){
     ctx.beginPath();
-    ctx.moveTo(x+r,y);
-    ctx.arcTo(x+w,y,x+w,y+h,r);
-    ctx.arcTo(x+w,y+h,x,y+h,r);
-    ctx.arcTo(x,y+h,x,y,r);
-    ctx.arcTo(x,y,x+w,y,r);
-    ctx.closePath();
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
   }
 
-  roundedRect(0,0,W,H,R);
-  ctx.fillStyle='#fff'; ctx.fill();
-  ctx.save(); roundedRect(0,0,W,H,R); ctx.clip();
+  // Card clip
+  rr(0,0,LW,LH,LR); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.save(); rr(0,0,LW,LH,LR); ctx.clip();
 
   // Teal top
-  ctx.fillStyle=TEAL; ctx.fillRect(0,0,W,topH);
+  ctx.fillStyle=TEAL; ctx.fillRect(0,0,LW,LtopH);
 
-  // Logo
-  var logoImg=document.querySelector('.vcard-logo');
-  var lw=240;
-  ctx.drawImage(logoImg,(W-lw)/2,10,lw,lw);
+  // Logo from pre-rendered cache
+  var src = cachedLogoCanvas || document.querySelector('.vcard-logo');
+  var lw=200;
+  ctx.drawImage(src,(LW-lw)/2,8,lw,lw);
 
   // Divider
-  ctx.strokeStyle='rgba(201,169,110,0.4)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo((W-80)/2,topH-102); ctx.lineTo((W+80)/2,topH-102); ctx.stroke();
+  ctx.strokeStyle='rgba(201,169,110,0.4)'; ctx.lineWidth=0.75;
+  ctx.beginPath(); ctx.moveTo((LW-70)/2,LtopH-90); ctx.lineTo((LW+70)/2,LtopH-90); ctx.stroke();
 
   // Name
   ctx.textAlign='center'; ctx.fillStyle=GOLD;
-  ctx.font='bold 30px Optima,Georgia,serif';
-  ctx.fillText(personName,W/2,topH-68);
+  ctx.font='bold 24px Optima,Georgia,serif';
+  ctx.fillText(personName,LW/2,LtopH-60);
 
   // Co-Founder
   ctx.fillStyle='rgba(201,169,110,0.52)';
-  ctx.font='15px Optima,Georgia,serif';
-  ctx.fillText(subtitle.toUpperCase(),W/2,topH-42);
+  ctx.font='12px Optima,Georgia,serif';
+  ctx.fillText(subtitle.toUpperCase(),LW/2,LtopH-38);
 
-  // Job title
-  ctx.fillStyle='rgba(201,169,110,0.75)';
-  ctx.font='16px Optima,Georgia,serif';
-  ctx.fillText(title,W/2,topH-18);
+  // Title
+  ctx.fillStyle='rgba(201,169,110,0.78)';
+  ctx.font='13px Optima,Georgia,serif';
+  ctx.fillText(title,LW/2,LtopH-18);
 
   // White bottom
-  ctx.fillStyle='#fff'; ctx.fillRect(0,topH,W,botH);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,LtopH,LW,LbotH);
 
-  var lx=52, tx=lx+38, rowGap=62;
-  var r1=topH+66, r2=r1+rowGap, r3=r2+rowGap;
+  var lx=40, tx=lx+32, gap=52;
+  var r1=LtopH+54, r2=r1+gap, r3=r2+gap;
 
-  function drawIcon(type,cx,cy){
-    var s=11;
-    ctx.save(); ctx.strokeStyle=TEAL; ctx.lineWidth=1.8;
+  function icon(type,cx,cy){
+    var s=9; ctx.save(); ctx.strokeStyle=TEAL; ctx.lineWidth=1.4;
     ctx.lineCap='round'; ctx.lineJoin='round';
     if(type==='mail'){
       ctx.beginPath(); ctx.rect(cx-s,cy-s*0.7,s*2,s*1.4); ctx.stroke();
@@ -412,24 +429,25 @@ function drawAndExport() {
   }
 
   ctx.textAlign='left'; ctx.fillStyle='#2c2c2c';
-  ctx.font='20px Optima,Georgia,serif';
+  ctx.font='16px Optima,Georgia,serif';
 
-  drawIcon('mail',  lx+12,r1-6); ctx.fillText(email,        tx,r1);
-  drawIcon('phone', lx+12,r2-6); ctx.fillText(phone,        tx,r2);
-  drawIcon('globe', lx+12,r3-6); ctx.fillText('egmedica.com',tx,r3);
+  icon('mail', lx+10,r1-5); ctx.fillText(email,        tx,r1);
+  icon('phone',lx+10,r2-5); ctx.fillText(phone,        tx,r2);
+  icon('globe',lx+10,r3-5); ctx.fillText('egmedica.com',tx,r3);
 
-  var sepY=r3+38;
-  ctx.strokeStyle='#e8e5df'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(lx,sepY); ctx.lineTo(W-lx,sepY); ctx.stroke();
+  var sepY=r3+32;
+  ctx.strokeStyle='#e8e5df'; ctx.lineWidth=0.75;
+  ctx.beginPath(); ctx.moveTo(lx,sepY); ctx.lineTo(LW-lx,sepY); ctx.stroke();
 
-  var qrSize=112, qrY=sepY+14;
-  ctx.drawImage(document.getElementById('vc-qr'),W-lx-qrSize,qrY,qrSize,qrSize);
+  var qrSize=94, qrY=sepY+12;
+  ctx.drawImage(document.getElementById('vc-qr'),LW-lx-qrSize,qrY,qrSize,qrSize);
 
   ctx.fillStyle='rgba(48,71,72,0.45)';
-  ctx.font='bold 13px Optima,Georgia,serif';
-  ctx.fillText('EGMEDICA.COM',lx,sepY+40);
-  ctx.fillStyle='#bbb'; ctx.font='12px Optima,Georgia,serif';
-  ctx.fillText('Scan to visit website',lx,sepY+60);
+  ctx.font='bold 11px Optima,Georgia,serif';
+  ctx.fillText('EGMEDICA.COM',lx,sepY+34);
+  ctx.fillStyle='#bbb';
+  ctx.font='10px Optima,Georgia,serif';
+  ctx.fillText('Scan to visit website',lx,sepY+52);
 
   ctx.restore();
 
@@ -451,12 +469,9 @@ function drawAndExport() {
 function saveCard() {
   document.getElementById('save-btn').textContent='Saving...';
   document.getElementById('save-btn').style.opacity='0.7';
-  // Wait for fonts to be ready for crisp text
-  if(document.fonts && document.fonts.ready){
-    document.fonts.ready.then(function(){ drawAndExport(); });
-  } else {
-    setTimeout(drawAndExport, 300);
-  }
+  var run = function(){ drawAndExport(); };
+  if(document.fonts&&document.fonts.ready){ document.fonts.ready.then(run); }
+  else { setTimeout(run,300); }
 }
 </script>
 </body>
