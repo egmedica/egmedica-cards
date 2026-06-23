@@ -320,21 +320,6 @@ function showLanding() {
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-function rasterizeLogo(imgEl, callback) {
-  // Render at 4x the display size for sharpness
-  var displayW = imgEl.offsetWidth || 220;
-  var displayH = imgEl.offsetHeight || 220;
-  var scale = 4;
-  var c = document.createElement('canvas');
-  c.width = displayW * scale;
-  c.height = displayH * scale;
-  var ctx = c.getContext('2d');
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(imgEl, 0, 0, c.width, c.height);
-  callback(c.toDataURL('image/png'));
-}
-
 function saveCard() {
   var btn = document.getElementById('save-btn');
   var backBtn = document.querySelector('.back-btn');
@@ -342,50 +327,40 @@ function saveCard() {
   btn.style.opacity = '0.7';
   backBtn.style.visibility = 'hidden';
 
-  var logoImg = document.querySelector('.vcard-logo');
-  var originalSrc = logoImg.src;
+  var card = document.querySelector('.vcard');
+  html2canvas(card, {
+    scale: 4,
+    useCORS: true,
+    allowTaint: true,
+    foreignObjectRendering: true,
+    backgroundColor: '#ffffff',
+    imageTimeout: 0,
+    logging: false
+  }).then(function(canvas) {
+    backBtn.style.visibility = '';
+    btn.textContent = 'Save card';
+    btn.style.opacity = '1';
 
-  // Pre-convert SVG logo to PNG so html2canvas can render it cleanly
-  rasterizeLogo(logoImg, function(pngSrc) {
-    logoImg.src = pngSrc;
-    // Wait a tick for the new src to apply
-    setTimeout(function() {
-      var card = document.querySelector('.vcard');
-      html2canvas(card, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false
-      }).then(function(canvas) {
-        logoImg.src = originalSrc;
-        backBtn.style.visibility = '';
-        btn.textContent = 'Save card';
-        btn.style.opacity = '1';
+    var name = document.getElementById('vc-name').textContent.split(' ')[0].toLowerCase();
+    var filename = 'egmedica-' + name + '-card.png';
 
-        var name = document.getElementById('vc-name').textContent.split(' ')[0].toLowerCase();
-        var filename = 'egmedica-' + name + '-card.png';
-
-        canvas.toBlob(function(blob) {
-          var file = new File([blob], filename, { type: 'image/png' });
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({ files: [file] }).catch(function(){});
-          } else {
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            a.click();
-            setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
-          }
-        }, 'image/png');
-      }).catch(function() {
-        logoImg.src = originalSrc;
-        backBtn.style.visibility = '';
-        btn.textContent = 'Save card';
-        btn.style.opacity = '1';
-      });
-    }, 50);
+    canvas.toBlob(function(blob) {
+      var file = new File([blob], filename, { type: 'image/png' });
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file] }).catch(function(){});
+      } else {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+      }
+    }, 'image/png');
+  }).catch(function() {
+    backBtn.style.visibility = '';
+    btn.textContent = 'Save card';
+    btn.style.opacity = '1';
   });
 }
 </script>
