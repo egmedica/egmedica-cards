@@ -367,12 +367,9 @@ function drawAndExport() {
     ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
   }
 
-  // Card clip
-  rr(0,0,LW,LH,LR); ctx.fillStyle='#fff'; ctx.fill();
-  ctx.save(); rr(0,0,LW,LH,LR); ctx.clip();
-
-  // Teal top
-  ctx.fillStyle=TEAL; ctx.fillRect(0,0,LW,LtopH);
+  // Fill entire canvas — no transparent corners
+  ctx.fillStyle=TEAL; ctx.fillRect(0,0,LW,LH);
+  ctx.save();
 
   // Logo from pre-rendered cache
   var src = cachedLogoCanvas || document.querySelector('.vcard-logo');
@@ -398,7 +395,7 @@ function drawAndExport() {
   ctx.font='13px Optima,Georgia,serif';
   ctx.fillText(title,LW/2,LtopH-18);
 
-  // White bottom
+  // White bottom (slight rounded top corners where sections meet)
   ctx.fillStyle='#fff'; ctx.fillRect(0,LtopH,LW,LbotH);
 
   var lx=40, tx=lx+32, gap=52;
